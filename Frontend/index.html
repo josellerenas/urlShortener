@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <h2>URL Shortener</h2>
+  <form id="myForm">
+    <label for="urlDirection">Enter URL:</label>
+    <input type="text" name="urlDirection" id="urlDirection">
+    <button type="submit">Submit</button>
+  </form>
+
+  <script>
+    document.getElementById('myForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent form submission
+
+        // Get input value
+        var inputData = document.getElementById('urlDirection').value;
+
+        // Create JSON object
+        var jsonData = {
+            urlDirection: inputData
+        };
+
+        // Send JSON data to endpoint
+        fetch('http://localhost:8080/shortUrlPost', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(jsonData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response from server:', data);
+            // Handle response as needed
+        })
+        .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+            // Handle error
+        });
+    });
+</script>
+</body>
+</html>
