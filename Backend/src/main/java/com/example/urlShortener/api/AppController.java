@@ -18,42 +18,39 @@ public class AppController {
         this.appService = appService;
     }
 
-    @GetMapping("/hello-world")
-    public String helloWorld() {
-        return "Hello world from the API";
-    }
-
-    @GetMapping("/shortUrl/{myUrl}")
-    public String shortUrl(@PathVariable String myUrl) {
-        return "Do you want to short this Url? " + myUrl;
-    }
-
+    // Generates a new short URL from an original large URL, and saves it in the database.
     @PostMapping("/shortUrlPost")
-    public void shortUrlPost(@RequestBody URL myUrl) {
+    public URL shortUrlPost(@RequestBody URL myUrl) {
+
+        // Generates a random string that's not already existing in the database.
         String randomString = "";
         do {
             randomString = appService.generateRandomString();
         } while (appRepository.existsByShortUrl(randomString));
 
+        // todo: check first if the long URL already has a short URL, and return it if so.
+
+        // Checks if the original large URL contains "https://" or "http://" at the beginning. If not, adds it.
+        String existsHttps = myUrl.getLongUrl().substring(0, Math.min(myUrl.getLongUrl().length(), 8));
+        if ( !(existsHttps.contains("https://") || existsHttps.contains("http://")) ) {
+            myUrl.setLongUrl("https://" + myUrl.getLongUrl());
+        }
+
         myUrl.setShortUrl(randomString);
         myUrl.setDate(appService.getTodaysDate());
         appRepository.save(myUrl);
+
+        return myUrl;
     }
 
-//    @GetMapping("/{shortUrl}")
-//    public void redirectShortUrlToLongUrl(@PathVariable String shortUrl) {
-//        URL temp = appRepository.findByShortUrl(shortUrl);
-//        System.out.println(temp);
-//        System.out.println(temp.getLongUrl());
-//    }
-
+    // Takes you to the large URL associated with the short URL selected.
     @GetMapping("/{shortUrl}")
     public ModelAndView redirectShortUrlToLongUrl(@PathVariable String shortUrl) {
 
+        // If the short URL exists, takes you to the associated large URL. If not, takes you to a determined error page.
         if (appRepository.existsByShortUrl(shortUrl)) {
             URL temp = appRepository.findByShortUrl(shortUrl);
-            // todo: fix this "https" thing. Check if the original url already has it.
-            String redirectUrl = "https://" + temp.getLongUrl();
+            String redirectUrl = temp.getLongUrl();
             return new ModelAndView(new RedirectView(redirectUrl));
         } else { // When the short URL doesn't exist, handle properly
             String redirectUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley";
